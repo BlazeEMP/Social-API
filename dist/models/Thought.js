@@ -1,47 +1,55 @@
 import { Schema, Types, model } from 'mongoose';
-const assignmentSchema = new Schema({
-    assignmentId: {
+const reactionSchema = new Schema({
+    reactionId: {
         type: Schema.Types.ObjectId,
         default: () => new Types.ObjectId(),
     },
-    name: {
+    reactionBody: {
         type: String,
         required: true,
-        maxlength: 50,
-        minlength: 4,
-        default: 'Unnamed assignment',
+        maxlength: 280,
     },
-    score: {
-        type: Number,
-        required: true,
-        default: () => Math.floor(Math.random() * (100 - 70 + 1) + 70),
-    },
-}, {
-    timestamps: true,
-    _id: false
-});
-const studentSchema = new Schema({
-    first: {
+    username: {
         type: String,
         required: true,
-        max_length: 50,
     },
-    last: {
-        type: String,
-        required: true,
-        max_length: 50,
+    createdAt: {
+        type: Date,
+        default: Date.now,
+        get: (timestamp) => timestamp,
     },
-    github: {
-        type: String,
-        required: true,
-        max_length: 50,
-    },
-    assignments: [assignmentSchema],
 }, {
     toJSON: {
         getters: true,
     },
-    timestamps: true
+    _id: false
 });
-const Student = model('Student', studentSchema);
-export default Student;
+const thoughtSchema = new Schema({
+    thoughtText: {
+        type: String,
+        required: true,
+        min_length: 1,
+        max_length: 280,
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now,
+        get: (timestamp) => timestamp,
+    },
+    username: {
+        type: String,
+        required: true,
+    },
+    reactions: [reactionSchema],
+}, {
+    toJSON: {
+        virtuals: true,
+        getters: true,
+    },
+    _id: true, // TODO Verify this is correct when not using id field in constructor
+});
+thoughtSchema.virtual("reactionCount").get(function () {
+    return this.reactions.length;
+});
+const Thought = model('Thought', thoughtSchema);
+export default Thought;

@@ -1,4 +1,12 @@
-import { Schema, Types, model, type Document } from 'mongoose';
+import { Schema, model, Document } from 'mongoose';
+
+const validateEmail = (email: String) => {
+    return String(email)
+        .toLowerCase()
+        .match(
+            /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+        );
+};
 
 interface IUser extends Document {
     username: string,
@@ -19,7 +27,7 @@ const userSchema = new Schema<IUser>({
         type: String,
         unique: true,
         required: true,
-        // TODO: Add email validation Mongooses matching validation
+        validate: [validateEmail, 'Please enter a valid email address'],
     },
     thoughts: {
         type: [Schema.Types.ObjectId],
@@ -35,7 +43,7 @@ const userSchema = new Schema<IUser>({
             virtuals: true,
             getters: true,
         },
-        id: true, // TODO Verify this is correct when not using id field in constructor
+        id: true,
     }
 );
 
