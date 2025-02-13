@@ -1,9 +1,5 @@
-import { Schema, Types, model } from 'mongoose';
+import { Schema, model } from 'mongoose';
 const userSchema = new Schema({
-    _id: {
-        type: Schema.Types.ObjectId,
-        default: () => new Types.ObjectId(),
-    },
     username: {
         type: String,
         unique: true,
@@ -30,10 +26,8 @@ const userSchema = new Schema({
         virtuals: true,
         getters: true,
     },
-    id: false,
-    timestamps: true
+    id: true, // TODO Verify this is correct when not using id field in constructor
 });
-// TODO verify virtual
 userSchema.virtual('friendCount').get(function () {
     return this.friends?.length;
 });

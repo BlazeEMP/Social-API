@@ -1,14 +1,12 @@
-// TODO edit final
 import { Request, Response } from 'express';
-import { Thought } from '../models/index.js';
-import { User } from '../models/index.js';
+import { User, Thought } from '../models/index.js';
 
 // routes for /api/thoughts ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 // GET All Thoughts /thoughts
 export const getAllThoughts = async (_req: Request, res: Response) => {
     try {
-        const thoughts = await Thought.find();
+        const thoughts = await Thought.find().select('-__v'); // exclude __v field, we don't need to check version key when reporting a thought document
         res.json(thoughts);
     } catch (error: any) {
         res.status(500).json({ message: 'Error in getAllThoughts(): ', error: error.message });
@@ -17,9 +15,9 @@ export const getAllThoughts = async (_req: Request, res: Response) => {
 
 // POST Thought /thoughts
 export const createThought = async (req: Request, res: Response) => {
-    const { thought } = req.body;
     try {
-        const newThought = await Thought.create({ thought });
+        const newThought = await Thought.create(req.body);
+        await User.findOneAndUpdate({ username: newThought.username }, { $push: { thoughts: newThought._id } });
         res.status(201).json(newThought);
     } catch (error: any) {
         res.status(400).json({ message: 'Error in createThought(): ', error: error.message });
@@ -32,7 +30,9 @@ export const createThought = async (req: Request, res: Response) => {
 export const getThoughtById = async (req: Request, res: Response) => {
     const { thoughtId } = req.params;
     try {
-        const thought = await Thought.findById(thoughtId).select('-__v'); // exclude __v field, we don't need to check version key when reporting a user document
+        const thought = await Thought.findById(thoughtId)
+            .select('-__v') // exclude __v field, we don't need to check version key when reporting a user document
+            .select('-_id'); // we send the id to get this one, we don't need to report the id again
         if (!thought) {
             return res.status(404).json({ message: 'No thought found in getThoughtById()' });
         }
@@ -45,11 +45,10 @@ export const getThoughtById = async (req: Request, res: Response) => {
 // PUT Thought based on id /thoughts/:id
 export const updateThought = async (req: Request, res: Response) => {
     const { thoughtId } = req.params;
-    const updateInfo = req.body;
     try {
         const thoughtUpdate = await Thought.findOneAndUpdate(
             { _id: thoughtId },
-            { $set: updateInfo },
+            { $set: req.body },
             { runValidators: true, new: true }
         );
         if (!thoughtUpdate) {
@@ -85,11 +84,10 @@ export const deleteThought = async (req: Request, res: Response) => {
 // POST Reaction to Thought based on Thought id /thoughts/:thoughtId/reactions
 export const createReaction = async (req: Request, res: Response) => {
     const { thoughtId } = req.params;
-    const reactionContent = req.body;
     try {
         const thoughtUpdate = await Thought.findOneAndUpdate(
             { _id: thoughtId },
-            { $push: { reactions: reactionContent } },
+            { $push: { reactions: req.body } },
             { new: true }
         );
         if (!thoughtUpdate) {

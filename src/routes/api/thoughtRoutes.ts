@@ -10,7 +10,6 @@ import {
     deleteReaction,
 } from '../../controllers/thoughtController.js';
 
-// TODO verify all routes correct
 // /api/thoughts
 router.route('/')
     .get(getAllThoughts)

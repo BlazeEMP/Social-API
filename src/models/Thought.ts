@@ -1,4 +1,4 @@
-import { Schema, Types, model, type Document } from 'mongoose';
+import { Schema, Types, model, Document } from 'mongoose';
 
 interface IReaction extends Document {
     reactionId: Schema.Types.ObjectId,
@@ -11,7 +11,7 @@ interface IThought extends Document {
     thoughtText: string,
     createdAt: Date,
     username: string,
-    reactions: Schema.Types.ObjectId[] // TODO Verify this is correct
+    reactions: Schema.Types.ObjectId[]
 }
 
 const reactionSchema = new Schema<IReaction>({
@@ -65,7 +65,7 @@ const thoughtSchema = new Schema<IThought>({
             virtuals: true,
             getters: true,
         },
-        _id: true, // TODO Verify this is correct when not using id field in constructor
+        _id: true,
     }
 );
 
