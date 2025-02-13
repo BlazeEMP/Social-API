@@ -1,175 +1,114 @@
 import { Request, Response } from 'express';
-import { ObjectId } from 'mongodb';
 import { User } from '../models/index.js';
+import { Thought } from '../models/index.js';
 
-// Aggregate function to get number of users overall
-export const userCount = async () => {
-    const numberOfUsers = await User.aggregate()
-        .count('userCount');
-    return numberOfUsers;
-}
+// routes for /api/users ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-// Aggregate function for getting the overall grade using $avg
-export const grade = async (userId: string) =>
-    User.aggregate([
-        // only include the given student by using $match
-        { $match: { _id: new ObjectId(userId) } },
-        {
-            $unwind: '$assignments',
-        },
-        {
-            $group: {
-                _id: new ObjectId(userId),
-                overallGrade: { $avg: '$assignments.score' },
-            },
-        },
-    ]);
-
-// TODO edit final
 // GET for all users /users
 export const getAllUsers = async (_req: Request, res: Response) => {
     try {
-        const users = await Student.find();
-
-        const studentObj = {
-            users,
-            headCount: await headCount(),
-        }
-
-        res.json(userObj);
+        const users = await User.find();
+        res.status(200).json(users);
     } catch (error: any) {
-        res.status(500).json({
-            message: error.message
-        });
+        res.status(500).json({ message: "Error in getAllUsers(): ", error: error.message });
     }
 }
-
-// TODO edit final
-// GET for user by id /users/:id
-export const getUserById = async (req: Request, res: Response) => {
-    const { userId } = req.params;
-    try {
-        const user = await User.findById(userId);
-        if (user) {
-            res.json({
-                user,
-                grade: await grade(userId)
-            });
-        } else {
-            res.status(404).json({
-                message: 'User not found'
-            });
-        }
-    } catch (error: any) {
-        res.status(500).json({
-            message: error.message
-        });
-    }
-};
 
 // POST  for new User /users
 export const createUser = async (req: Request, res: Response) => {
+    const { user } = req.body;
     try {
-        const user = await User.create(req.body);
-        res.json(user);
-    } catch (err) {
-        res.status(500).json(err);
+        const newUser = await User.create(user);
+        res.status(201).json(newUser);
+    } catch (error: any) {
+        res.status(500).json({ message: "Error in createUser(): ", error: error.message });
     }
 }
 
-// PUT User based on id /users/:id
-export const updateUser = async (req: Request, res: Response) => {
-    try {
-        const user = await User.findOneAndUpdate(
-            { _id: req.params.userId },
-            { $set: req.body },
-        );
-    } catch (err) {
-        res.status(500).json(err);
-    }
-}
+// routes for /api/users/:userId ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-// TODO edit final
-// DELETE User based on id /users/:id
-export const deleteUser = async (req: Request, res: Response) => {
+// TODO edit final, populate thoughts and friends?
+// GET for user by id /users/:userId
+export const getUserById = async (req: Request, res: Response) => {
+    const { userId } = req.params;
     try {
-        const student = await User.findOneAndDelete({ _id: req.params.studentId });
-
-        if (!student) {
-            return res.status(404).json({ message: 'No such student exists' });
+        const user = await User.findOne({ _id: userId }).select('-__v'); // exclude __v field, we don't need to check version key when reporting a user document
+        if (!user) {
+            return res.status(404).json({ message: 'No user found in getUserById()' });
         }
+        return res.json(user);
+    } catch (error: any) {
+        return res.status(500).json({ message: 'Error in getUserById(): ', error: error.message });
+    }
+}
 
-        const course = await Course.findOneAndUpdate(
-            { students: req.params.studentId },
-            { $pull: { students: req.params.studentId } },
+// PUT User based on id /users/:userId
+export const updateUser = async (req: Request, res: Response) => {
+    const { userId } = req.params;
+    const updateInfo = req.body;
+    try {
+        const userUpdate = await User.findOneAndUpdate(
+            { _id: userId },
+            { $set: updateInfo },
             { new: true }
         );
-
-        if (!course) {
-            return res.status(404).json({
-                message: 'User deleted, but no courses found',
-            });
+        if (!userUpdate) {
+            return res.status(404).json({ message: 'No user found in updateUser()' });
         }
-
-        return res.json({ message: 'User successfully deleted' });
-    } catch (err) {
-        console.log(err);
-        return res.status(500).json(err);
+        return res.json(userUpdate);
+    } catch (error: any) {
+        return res.status(500).json({ message: 'Error in updateUser(): ', error: error.message });
     }
 }
 
-/**
- * POST Assignment based on /students/:studentId/assignments
- * @param string id
- * @param object assignment
- * @returns object student 
-*/
+// DELETE User based on id /users/:userId
+export const deleteUser = async (req: Request, res: Response) => {
+    const { userId } = req.params;
+    try {
+        const userDelete = await User.findOneAndDelete({ _id: userId });
+        if (!userDelete) {
+            return res.status(404).json({ message: 'No user found in deleteUser()' });
+        }
+        return res.json({ message: 'User successfully deleted: ', userDelete });
+    } catch (error: any) {
+        return res.status(500).json({ message: 'Error in deleteUser(): ', error: error.message });
+    }
+}
 
+// routes for /api/users/:userId/friends/:friendId ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+// POST Friend based on /users/:userId/friends/:friendId
 export const addFriend = async (req: Request, res: Response) => {
-    console.log('You are adding an assignment');
-    console.log(req.body);
+    const { userId, friendId } = req.params;
     try {
-        const student = await Student.findOneAndUpdate(
-            { _id: req.params.studentId },
-            { $addToSet: { assignments: req.body } },
-            { runValidators: true, new: true }
+        const user = await User.findOneAndUpdate(
+            { _id: userId },
+            { $addToSet: { friends: friendId } },
+            { new: true }
         );
-
-        if (!student) {
-            return res
-                .status(404)
-                .json({ message: 'No student found with that ID :(' });
+        if (!user) {
+            return res.status(404).json({ message: 'No user found in addFriend()' });
         }
-
-        return res.json(student);
-    } catch (err) {
-        return res.status(500).json(err);
+        return res.json(user);
+    } catch (error: any) {
+        return res.status(500).json({ message: "Error in addFriend(): ", error: error.message });
     }
 }
 
-/**
- * DELETE Assignment based on /students/:studentId/assignments
- * @param string assignmentId
- * @param string studentId
- * @returns object student 
-*/
-
+// DELETE Friend based on /users/:userId/friends/:friendId
 export const removeFriend = async (req: Request, res: Response) => {
+    const { userId, friendId } = req.params;
     try {
-        const student = await Student.findOneAndUpdate(
-            { _id: req.params.studentId },
-            { $pull: { assignments: { assignmentId: req.params.assignmentId } } },
+        const user = await User.findOneAndUpdate(
+            { _id: userId },
+            { $pull: { friends: { assignmentId: friendId } } },
             { runValidators: true, new: true }
-        );
-
-        if (!student) {
-            return res
-                .status(404)
-                .json({ message: 'No student found with that ID :(' });
+        ).populate('friends');
+        if (!user) {
+            return res.status(404).json({ message: 'No user found in removeFriend()' });
         }
-
-        return res.json(student);
-    } catch (err) {
-        return res.status(500).json(err);
+        return res.json(user);
+    } catch (error: any) {
+        return res.status(500).json({ message: 'Error in removeFriend(): ', error: error.message });
     }
 }

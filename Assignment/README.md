@@ -199,9 +199,9 @@ This will not be a model, but rather will be used as the `reaction` field's subd
 
 **`/api/thoughts/:thoughtId/reactions`**
 
-* `POST` to create a reaction stored in a single thought's `reactions` array field
+* X `POST` to create a reaction stored in a single thought's `reactions` array field
 
-* `DELETE` to pull and remove a reaction by the reaction's `reactionId` value
+* X `DELETE` to pull and remove a reaction by the reaction's `reactionId` value
 
 ## Grading Requirements
 
