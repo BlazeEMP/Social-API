@@ -3,7 +3,6 @@ import { Schema, Types, model, type Document } from 'mongoose';
 interface IReaction extends Document {
     reactionId: Schema.Types.ObjectId,
     reactionBody: string,
-    // TODO check if username needs to be loaded in
     username: string,
     createdAt: Date
 }
@@ -11,36 +10,34 @@ interface IReaction extends Document {
 interface IThought extends Document {
     thoughtText: string,
     createdAt: Date,
-    // TODO check if username needs to be loaded in
     username: string,
-    reactions: Schema.Types.ObjectId[]
+    reactions: Schema.Types.ObjectId[] // TODO Verify this is correct
 }
 
-const reactionSchema = new Schema<IReaction>(
-    {
-        reactionId: {
-            type: Schema.Types.ObjectId,
-            default: () => new Types.ObjectId(),
-        },
-        reactionBody: {
-            type: String,
-            required: true,
-            maxlength: 280,
-        },
-        username: {
-            type: String,
-            required: true,
-        },
-        createdAt: {
-            type: Date,
-            default: Date.now,
-            // TODO use a getter method to format the date timestamp on query
-            get: (createdAtVal: Date) => {
-                return createdAtVal.toDateString();
-        },
+const reactionSchema = new Schema<IReaction>({
+    reactionId: {
+        type: Schema.Types.ObjectId,
+        default: () => new Types.ObjectId(),
     },
+    reactionBody: {
+        type: String,
+        required: true,
+        maxlength: 280,
+    },
+    username: {
+        type: String,
+        required: true,
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now,
+        get: (timestamp: Date) => timestamp,
+    },
+},
     {
-        timestamps: true,
+        toJSON: {
+            getters: true,
+        },
         _id: false
     }
 );
@@ -49,15 +46,15 @@ const thoughtSchema = new Schema<IThought>({
     thoughtText: {
         type: String,
         required: true,
-        max_length: 255,
+        min_length: 1,
+        max_length: 280,
     },
     createdAt: {
         type: Date,
-        // TODO use a getter method to format the date timestamp on query
         default: Date.now,
+        get: (timestamp: Date) => timestamp,
     },
     username: {
-        // TODO how to load username from User model
         type: String,
         required: true,
     },
@@ -68,9 +65,13 @@ const thoughtSchema = new Schema<IThought>({
             virtuals: true,
             getters: true,
         },
-        timestamps: true
+        _id: true, // TODO Verify this is correct when not using id field in constructor
     }
 );
+
+thoughtSchema.virtual("reactionCount").get(function () {
+    return this.reactions.length;
+});
 
 const Thought = model('Thought', thoughtSchema);
 

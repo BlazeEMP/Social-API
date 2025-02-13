@@ -18,8 +18,8 @@ router.route('/')
 // /api/users/:userId
 router.route('/:userId')
     .get(getUserById)
-    .delete(deleteUser)
-    .put(updateUser);
+    .put(updateUser)
+    .delete(deleteUser);
 
 // /api/users/:userId/friends/:friendId
 router.route('/:userId/friends/:friendId')

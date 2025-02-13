@@ -1,8 +1,6 @@
 import { Schema, Types, model, type Document } from 'mongoose';
 
 interface IUser extends Document {
-    // TODO verify _id needed or how we recieve by default
-    _id: Schema.Types.ObjectId,
     username: string,
     email: string,
     thoughts: Schema.Types.ObjectId[],
@@ -10,11 +8,6 @@ interface IUser extends Document {
 }
 
 const userSchema = new Schema<IUser>({
-    // TODO verify _id needed or how we recieve by default
-    _id: {
-        type: Schema.Types.ObjectId,
-        default: () => new Types.ObjectId(),
-    },
     username: {
         type: String,
         unique: true,
@@ -42,12 +35,10 @@ const userSchema = new Schema<IUser>({
             virtuals: true,
             getters: true,
         },
-        id: false,
-        timestamps: true
+        id: true, // TODO Verify this is correct when not using id field in constructor
     }
 );
 
-// TODO verify virtual
 userSchema.virtual('friendCount').get(function () {
     return this.friends?.length;
 });
