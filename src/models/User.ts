@@ -1,5 +1,6 @@
 import { Schema, model, Document } from 'mongoose';
 
+// Function here from https://stackoverflow.com/questions/46155/how-can-i-validate-an-email-address-in-javascript/46181#46181
 const validateEmail = (email: String) => {
     return String(email)
         .toLowerCase()

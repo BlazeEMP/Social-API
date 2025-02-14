@@ -37,6 +37,10 @@
 
   No contributing, feel free to fork and use on your own for learning and testing.
 
+  ## Contributions
+
+  Answer from https://stackoverflow.com/questions/46155/how-can-i-validate-an-email-address-in-javascript/46181#46181 used for regex and validate function layout
+
   ## Tests
 
   Using a tool like insomnia to send http requests to all the API paths.
